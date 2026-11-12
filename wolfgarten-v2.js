@@ -643,6 +643,7 @@ if (typeof APP_DATA !== 'undefined' && Array.isArray(APP_DATA.scenes)) {
   }
   gameTasks.forEach(createGameHotspot);
 
+
   // Follow Marzipano scene changes (also for link hotspots).
   var originalSwitchScene = switchScene;
   switchScene = function(scene) {
