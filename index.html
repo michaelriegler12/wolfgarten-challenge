@@ -212,19 +212,20 @@
 <div id="pano"></div>
 
 <div id="sceneList">
-        <a href="javascript:void(0)" class="scene" data-id="21-physiksaal1"><li class="text">Physiksaal</li></a>
-        <a href="javascript:void(0)" class="scene" data-id="30-zeichensaal"><li class="text">Zeichensaal</li></a>
-        <a href="javascript:void(0)" class="scene" data-id="19-musiksaal"><li class="text">Musiksaal</li></a>
-        <a href="javascript:void(0)" class="scene" data-id="10-chemiesaal"><li class="text">Chemiesaal</li></a>
-        <a href="javascript:void(0)" class="scene" data-id="25-sportplatz"><li class="text">Sportplatz</li></a>
-        <a href="javascript:void(0)" class="scene" data-id="29-turnsaal"><li class="text">Turnsaal</li></a>
-        <a href="javascript:void(0)" class="scene" data-id="23-sekretariat1"><li class="text">Sekretariat</li></a>
-        <a href="javascript:void(0)" class="scene" data-id="32-direktionneu"><li class="text">Direktion</li></a>
-        <a href="javascript:void(0)" class="scene" data-id="36-werksaal"><li class="text">Werksaal</li></a>
-        <a href="javascript:void(0)" class="scene" data-id="26-sprachenraum"><li class="text">Sprachenraum</li></a>
-        <a href="javascript:void(0)" class="scene" data-id="7-bibliothek"><li class="text">Bibliothek</li></a>
-        <a href="javascript:void(0)" class="scene" data-id="24-speisesaal1"><li class="text">Tagesheim</li></a>
         <a href="javascript:void(0)" class="scene" data-id="4-aufenthaltsraum"><li class="text">Aufenthaltsraum</li></a>
+<a href="javascript:void(0)" class="scene" data-id="6-aueneingang"><li class="text">Außeneingang</li></a>
+<a href="javascript:void(0)" class="scene" data-id="7-bibliothek"><li class="text">Bibliothek</li></a>
+<a href="javascript:void(0)" class="scene" data-id="10-chemiesaal"><li class="text">Chemiesaal</li></a>
+<a href="javascript:void(0)" class="scene" data-id="32-direktionneu"><li class="text">Direktion</li></a>
+<a href="javascript:void(0)" class="scene" data-id="19-musiksaal"><li class="text">Musiksaal</li></a>
+<a href="javascript:void(0)" class="scene" data-id="21-physiksaal1"><li class="text">Physiksaal</li></a>
+<a href="javascript:void(0)" class="scene" data-id="23-sekretariat1"><li class="text">Sekretariat</li></a>
+<a href="javascript:void(0)" class="scene" data-id="25-sportplatz"><li class="text">Sportplatz</li></a>
+<a href="javascript:void(0)" class="scene" data-id="26-sprachenraum"><li class="text">Sprachenraum</li></a>
+<a href="javascript:void(0)" class="scene" data-id="24-speisesaal1"><li class="text">Tagesheim</li></a>
+<a href="javascript:void(0)" class="scene" data-id="29-turnsaal"><li class="text">Turnsaal</li></a>
+<a href="javascript:void(0)" class="scene" data-id="36-werksaal"><li class="text">Werksaal</li></a>
+<a href="javascript:void(0)" class="scene" data-id="30-zeichensaal"><li class="text">Zeichensaal</li></a>
       </div>
 
 <div id="titleBar">
@@ -274,7 +275,7 @@
 
 <script src="data.js"></script>
 <script>
-fetch('wolfgarten-schueler-daten.json', {cache: 'no-store'})
+fetch('wolfgarten-konfiguration.json', {cache: 'no-store'})
   .then(function(response) { if (!response.ok) throw new Error('HTTP ' + response.status); return response.json(); })
   .then(function(config) {
     // Exportierte Konfiguration unterstützt extraTasks.

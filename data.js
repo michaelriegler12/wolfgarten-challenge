@@ -2,7 +2,7 @@ var APP_DATA = {
   "scenes": [
     {
       "id": "0-1stockgangreligionsraum",
-      "name": "1.StockGangReligionsraum",
+      "name": "Gang im 1. Obergeschoss",
       "levels": [
         {
           "tileSize": 256,
@@ -56,7 +56,7 @@ var APP_DATA = {
     },
     {
       "id": "1-2stockgang",
-      "name": "2.StockGang",
+      "name": "Gang im 2. Obergeschoss",
       "levels": [
         {
           "tileSize": 256,
@@ -110,7 +110,7 @@ var APP_DATA = {
     },
     {
       "id": "2-2stockgangsprachenraum",
-      "name": "2.StockGangSprachenraum",
+      "name": "Gang zu den Sprachräumen",
       "levels": [
         {
           "tileSize": 256,
@@ -164,7 +164,7 @@ var APP_DATA = {
     },
     {
       "id": "3-3stockgang",
-      "name": "3.StockGang",
+      "name": "Gang im 3. Obergeschoss",
       "levels": [
         {
           "tileSize": 256,
@@ -254,7 +254,7 @@ var APP_DATA = {
     },
     {
       "id": "5-aufgangauen",
-      "name": "AufgangAußen",
+      "name": "Außenaufgang",
       "levels": [
         {
           "tileSize": 256,
@@ -362,7 +362,7 @@ var APP_DATA = {
     },
     {
       "id": "7-bibliothek",
-      "name": "Bibliothek",
+      "name": "Schulbibliothek",
       "levels": [
         {
           "tileSize": 256,
@@ -404,7 +404,7 @@ var APP_DATA = {
     },
     {
       "id": "8-bibliothek2",
-      "name": "Bibliothek2",
+      "name": "Schulbibliothek – Lesebereich",
       "levels": [
         {
           "tileSize": 256,
@@ -446,7 +446,7 @@ var APP_DATA = {
     },
     {
       "id": "9-buffet",
-      "name": "Buffet",
+      "name": "Schulbuffet",
       "levels": [
         {
           "tileSize": 256,
@@ -530,7 +530,7 @@ var APP_DATA = {
     },
     {
       "id": "11-erdgeschoss_gangedv",
-      "name": "Erdgeschoss_GangEdv",
+      "name": "Gang im Erdgeschoss",
       "levels": [
         {
           "tileSize": 256,
@@ -584,7 +584,7 @@ var APP_DATA = {
     },
     {
       "id": "12-gangdirektion",
-      "name": "GangDirektion",
+      "name": "Gang zur Direktion",
       "levels": [
         {
           "tileSize": 256,
@@ -638,7 +638,7 @@ var APP_DATA = {
     },
     {
       "id": "13-gangkeller",
-      "name": "GangKeller",
+      "name": "Gang im Untergeschoss",
       "levels": [
         {
           "tileSize": 256,
@@ -692,7 +692,7 @@ var APP_DATA = {
     },
     {
       "id": "14-gangkuche",
-      "name": "GangKüche",
+      "name": "Gang zum Speisesaal",
       "levels": [
         {
           "tileSize": 256,
@@ -746,7 +746,7 @@ var APP_DATA = {
     },
     {
       "id": "15-gangphysik",
-      "name": "GangPhysik",
+      "name": "Gang zum Physiksaal",
       "levels": [
         {
           "tileSize": 256,
@@ -781,7 +781,7 @@ var APP_DATA = {
     },
     {
       "id": "16-gangzeichmusiksaal",
-      "name": "GangZeichMusiksaal",
+      "name": "Gang zu den Kreativräumen",
       "levels": [
         {
           "tileSize": 256,
@@ -835,7 +835,7 @@ var APP_DATA = {
     },
     {
       "id": "17-lernwaben1",
-      "name": "Lernwaben(1)",
+      "name": "Lernwaben",
       "levels": [
         {
           "tileSize": 256,
@@ -961,7 +961,7 @@ var APP_DATA = {
     },
     {
       "id": "20-outdoorklasse",
-      "name": "OutdoorKlasse",
+      "name": "Outdoor-Klasse",
       "levels": [
         {
           "tileSize": 256,
@@ -1003,7 +1003,7 @@ var APP_DATA = {
     },
     {
       "id": "21-physiksaal1",
-      "name": "Physiksaal(1)",
+      "name": "Physiksaal",
       "levels": [
         {
           "tileSize": 256,
@@ -1045,7 +1045,7 @@ var APP_DATA = {
     },
     {
       "id": "22-religionsraum1",
-      "name": "Religionsraum(1)",
+      "name": "Religionsraum",
       "levels": [
         {
           "tileSize": 256,
@@ -1087,7 +1087,7 @@ var APP_DATA = {
     },
     {
       "id": "23-sekretariat1",
-      "name": "Sekretariat(1)",
+      "name": "Sekretariat",
       "levels": [
         {
           "tileSize": 256,
@@ -1135,7 +1135,7 @@ var APP_DATA = {
     },
     {
       "id": "24-speisesaal1",
-      "name": "Speisesaal1",
+      "name": "Speisesaal",
       "levels": [
         {
           "tileSize": 256,
@@ -1267,7 +1267,7 @@ var APP_DATA = {
     },
     {
       "id": "27-tischfussball",
-      "name": "Tischfussball",
+      "name": "Tischfußball",
       "levels": [
         {
           "tileSize": 256,
@@ -1447,7 +1447,7 @@ var APP_DATA = {
     },
     {
       "id": "31-1stocksitzeckeneu",
-      "name": "1.StockSitzecke(neu)",
+      "name": "Sitzecke im 1. Obergeschoss",
       "levels": [
         {
           "tileSize": 256,
@@ -1507,7 +1507,7 @@ var APP_DATA = {
     },
     {
       "id": "32-direktionneu",
-      "name": "Direktion(neu)",
+      "name": "Direktion",
       "levels": [
         {
           "tileSize": 256,
@@ -1609,7 +1609,7 @@ var APP_DATA = {
     },
     {
       "id": "34-ikt",
-      "name": "IKT",
+      "name": "Informatikraum",
       "levels": [
         {
           "tileSize": 256,
@@ -1651,7 +1651,7 @@ var APP_DATA = {
     },
     {
       "id": "35-schularztin",
-      "name": "Schulärztin",
+      "name": "Schulärztlicher Bereich",
       "levels": [
         {
           "tileSize": 256,
@@ -1693,7 +1693,7 @@ var APP_DATA = {
     },
     {
       "id": "36-werksaal",
-      "name": "Werksaal",
+      "name": "Werkraum",
       "levels": [
         {
           "tileSize": 256,

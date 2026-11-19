@@ -81,8 +81,8 @@
     return {score: score, discovered: discovered, total: tasks.filter(function(t) { return t.type !== 'info'; }).length};
   }
   function medal(score) {
-    if (score >= 100) return {icon:'🥇', label:'Goldmedaille'};
-    if (score >= 60) return {icon:'🥈', label:'Silbermedaille'};
+    if (score >= 120) return {icon:'🥇', label:'Goldmedaille'};
+    if (score >= 80) return {icon:'🥈', label:'Silbermedaille'};
     return {icon:'🥉', label:'Bronzemedaille'};
   }
   function showIntro() {
