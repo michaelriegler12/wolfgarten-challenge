@@ -4,7 +4,7 @@
   var config = window.WOLF_STUDENT_CONFIG;
   if (!config || !Array.isArray(config.tasks)) return;
   var tasks = config.tasks;
-  var key = 'wolfgarten-schueler-spielstand-v2';
+  var key = 'wolfgarten-challenge-v1';
   var blue = '#24417B', green = '#83AB2E', cream = '#F2E6CA';
   var style = document.createElement('style');
   style.textContent = `
