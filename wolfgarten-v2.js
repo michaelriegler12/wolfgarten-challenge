@@ -654,6 +654,7 @@ try { localStorage.removeItem(gameKey); } catch(e) {}
   var editMessage = document.getElementById('wolfEditMessage');
   var editOverlay = document.getElementById('wolfEditOverlay');
 
+  if (editor && editSelect && editMessage && editOverlay && document.getElementById('wolfEditToggle')) {
   // Quizfragen direkt im vorhandenen Bearbeitungsfenster ändern.
   var quizEditor = document.createElement('div');
   quizEditor.id = 'wolfQuizEditor';
@@ -756,40 +757,8 @@ try { localStorage.removeItem(gameKey); } catch(e) {}
     document.getElementById('wolfInfoMessage').textContent = '✓ Infotafel gespeichert. Anschließend Konfiguration exportieren.';
   });
 
-  function createGameHotspot(task, index) {
-    var target = scenes.find(function(s) { return s.data.id === task.scene; });
-    if (!target) return;
-    var el = document.createElement('button'); el.type = 'button';
-    el.className = 'wolf-hotspot ' + (task.type === 'coin' ? 'wolf-coin' : (task.type === 'quiz' ? 'wolf-quiz' : 'wolf-info')) + (done[index] ? ' completed' : '');
-    if (task.type === 'coin') {
-      el.textContent = '';
-      el.style.setProperty('background-image', 'url("img/wolfgarten-coin.png")', 'important');
-      el.style.setProperty('background-size', 'contain', 'important');
-      el.style.setProperty('background-position', 'center', 'important');
-      el.style.setProperty('background-repeat', 'no-repeat', 'important');
-      el.style.setProperty('background-color', 'transparent', 'important');
-      el.style.setProperty('border', '0', 'important');
-      el.style.setProperty('border-radius', '50%', 'important');
-      el.style.setProperty('padding', '0', 'important');
-      el.style.setProperty('width', '33px', 'important');
-      el.style.setProperty('height', '33px', 'important');
-    } else {
-      el.textContent = task.type === 'quiz' ? '❓' : 'ⓘ';
-    }
-    el.title = task.type === 'coin' ? 'Coin einsammeln' : (task.type === 'quiz' ? 'Quizfrage öffnen' : 'Infotafel öffnen');
-    el.setAttribute('aria-label', el.title);
-    el.addEventListener('click', function(e) {
-      e.stopPropagation();
-      if (editMode) { selectedTask = index; editSelect.value = String(index); refreshQuizEditor(); editMessage.textContent = 'Alt/Option gedrückt halten und auf die gewünschte Stelle klicken.'; return; }
-      gameTaskClick(task,index,el);
-    });
-    stopTouchAndScrollEventPropagation(el);
-    var fallback = {yaw:target.data.initialViewParameters.yaw + task.offset, pitch:task.pitch};
-    var position = savedPositions[index] || fallback;
-    var hotspot = target.scene.hotspotContainer().createHotspot(el, position);
-    gameHotspots[index] = {hotspot:hotspot, target:target, fallback:fallback, element:el};
-  }
-  gameTasks.forEach(createGameHotspot);
+
+
 
   // Neue Aufgaben direkt im Editor erstellen und entfernen.
   var createArea = document.createElement('div');
@@ -961,12 +930,50 @@ try { localStorage.removeItem(gameKey); } catch(e) {}
     }).catch(function() { editMessage.textContent = 'Datei konnte nicht importiert werden.'; });
     event.target.value = '';
   });
+  }
+
+  function createGameHotspot(task, index) {
+    var target = scenes.find(function(s) { return s.data.id === task.scene; });
+    if (!target) return;
+    var el = document.createElement('button'); el.type = 'button';
+    el.className = 'wolf-hotspot ' + (task.type === 'coin' ? 'wolf-coin' : (task.type === 'quiz' ? 'wolf-quiz' : 'wolf-info')) + (done[index] ? ' completed' : '');
+    if (task.type === 'coin') {
+      el.textContent = '';
+      el.style.setProperty('background-image', 'url("img/wolfgarten-coin.png")', 'important');
+      el.style.setProperty('background-size', 'contain', 'important');
+      el.style.setProperty('background-position', 'center', 'important');
+      el.style.setProperty('background-repeat', 'no-repeat', 'important');
+      el.style.setProperty('background-color', 'transparent', 'important');
+      el.style.setProperty('border', '0', 'important');
+      el.style.setProperty('border-radius', '50%', 'important');
+      el.style.setProperty('padding', '0', 'important');
+      el.style.setProperty('width', '33px', 'important');
+      el.style.setProperty('height', '33px', 'important');
+    } else {
+      el.textContent = task.type === 'quiz' ? '❓' : 'ⓘ';
+    }
+    el.title = task.type === 'coin' ? 'Coin einsammeln' : (task.type === 'quiz' ? 'Quizfrage öffnen' : 'Infotafel öffnen');
+    el.setAttribute('aria-label', el.title);
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (editMode) { selectedTask = index; editSelect.value = String(index); refreshQuizEditor(); editMessage.textContent = 'Alt/Option gedrückt halten und auf die gewünschte Stelle klicken.'; return; }
+      gameTaskClick(task,index,el);
+    });
+    stopTouchAndScrollEventPropagation(el);
+    var fallback = {yaw:target.data.initialViewParameters.yaw + task.offset, pitch:task.pitch};
+    var position = savedPositions[index] || fallback;
+    var hotspot = target.scene.hotspotContainer().createHotspot(el, position);
+    gameHotspots[index] = {hotspot:hotspot, target:target, fallback:fallback, element:el};
+  }
+
+  gameTasks.forEach(createGameHotspot);
+
   // Follow Marzipano scene changes (also for link hotspots).
   var originalSwitchScene = switchScene;
   switchScene = function(scene) {
     activeScene = scene;
     originalSwitchScene(scene);
-    if (editMode) refreshEditSelect();
+    if (editMode && typeof refreshEditSelect === 'function') refreshEditSelect();
   };
   gameUpdate();
 
