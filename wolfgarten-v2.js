@@ -444,31 +444,42 @@ if (typeof APP_DATA !== 'undefined' && Array.isArray(APP_DATA.scenes)) {
 
 
   // Wolfgarten Challenge: hotspots and shared score.
-  // Student edition: configuration is bundled with the project, not browser storage.
-  var config = window.WOLF_STUDENT_CONFIG;
-  if (!config || !Array.isArray(config.tasks) || !config.tasks.length) {
-    throw new Error('Wolfgarten: Aufgaben-Konfiguration fehlt oder ist leer.');
-  }
-  var gameKey = 'wolfgarten-schueler-spielstand-v2';
-  var gameTasks = config.tasks.filter(function(task) {
-    return task && ['coin', 'quiz', 'info'].indexOf(task.type) !== -1 &&
-      scenes.some(function(scene) { return scene.data.id === task.scene; });
+  var gameKey = 'wolfgarten-challenge-v1';
+  var positionsKey = 'wolfgarten-challenge-positions-v1';
+  var gameTasks = [];
+  // Zusätzliche Aufgaben bleiben über Neustarts erhalten; ursprüngliche IDs bleiben stabil.
+  var extraTasksKey = 'wolfgarten-challenge-extra-tasks-v1';
+  var baseTaskCount = gameTasks.length;
+  var extraTasks = [];
+  try { extraTasks = JSON.parse(localStorage.getItem(extraTasksKey) || '[]') || []; } catch(e) { extraTasks = []; }
+  if (!Array.isArray(extraTasks)) extraTasks = [];
+  extraTasks.forEach(function(task) {
+    if (task && (task.type === 'coin' || task.type === 'quiz' || task.type === 'info') && scenes.some(function(s) { return s.data.id === task.scene; })) {
+      gameTasks.push(task);
+    }
   });
-  if (gameTasks.length !== config.tasks.length) {
-    throw new Error('Wolfgarten: Einige Aufgaben verweisen auf unbekannte Räume.');
+  function saveExtraTasks() {
+    try { localStorage.setItem(extraTasksKey, JSON.stringify(gameTasks.slice(baseTaskCount))); } catch(e) {}
   }
-  var savedPositions = config.positions || {};
-  var savedQuestions = config.questions || {};
-  Object.keys(savedQuestions).forEach(function(key) {
-    var task = gameTasks[Number(key)], saved = savedQuestions[key];
-    if (!task || task.type !== 'quiz' || !saved || !Array.isArray(saved.answers)) return;
-    task.question = String(saved.question || task.question);
-    task.answers = saved.answers.map(String);
-    task.correct = Number(saved.correct) || 0;
-    task.points = Number(saved.points) || 0;
-  });
+  // Eigene Fragen werden getrennt von Positionen gespeichert.
+  var questionsKey = 'wolfgarten-challenge-questions-v1';
+  var savedQuestions = {};
+  try { savedQuestions = JSON.parse(localStorage.getItem(questionsKey) || '{}') || {}; } catch(e) { savedQuestions = {}; }
+  function applyQuestions() {
+    Object.keys(savedQuestions).forEach(function(key) {
+      var index = Number(key), saved = savedQuestions[key], task = gameTasks[index];
+      if (!task || task.type !== 'quiz' || !saved || !Array.isArray(saved.answers)) return;
+      task.question = String(saved.question || task.question);
+      task.answers = saved.answers.map(String);
+      task.correct = Math.max(0, Math.min(task.answers.length - 1, Number(saved.correct) || 0));
+      task.points = Math.max(0, Math.min(100, Number(saved.points) || 0));
+    });
+  }
+  applyQuestions();
+  var savedPositions = {};
+  try { savedPositions = JSON.parse(localStorage.getItem(positionsKey) || '{}') || {}; } catch(e) { savedPositions = {}; }
   var done = {};
-  // Bei jedem Seitenaufruf den Spielfortschritt zurücksetzen.
+  // Bei jedem Öffnen der VR-Challenge ein neues Spiel beginnen.
 done = {};
 try { localStorage.removeItem(gameKey); } catch(e) {}
   var scoreEl = document.getElementById('wolfScore');
@@ -478,31 +489,53 @@ try { localStorage.removeItem(gameKey); } catch(e) {}
   var gameClose = document.getElementById('wolfClose');
   function gameSave() { try { localStorage.setItem(gameKey, JSON.stringify(done)); } catch(e) {} }
   function gameScore() {
-    return gameTasks.reduce(function(sum, task, i) { return sum + (done[i] === true && task.type !== 'info' ? (task.type === 'coin' ? 5 : (task.points === undefined ? 10 : task.points)) : 0); }, 0);
+    return gameTasks.reduce(function(sum, task, i) {
+      if (done[i] !== true) return sum;
+
+      if (task.type === 'coin') return sum + 5;
+
+      if (task.type === 'quiz') {
+        return sum + (task.points === undefined ? 10 : task.points);
+      }
+
+      return sum;
+    }, 0);
   }
+
   function gameUpdate() {
-    var count = gameTasks.filter(function(t,i) { return t.type !== 'info' && !!done[i]; }).length;
-    var total = gameTasks.filter(function(t) { return t.type !== 'info'; }).length;
+    var pointTasks = gameTasks.filter(function(task) {
+      return task.type === 'coin' || task.type === 'quiz';
+    });
+
+    var total = pointTasks.length;
+
+    var count = gameTasks.filter(function(task, i) {
+      return (task.type === 'coin' || task.type === 'quiz') &&
+             done[i] === true;
+    }).length;
+
     scoreEl.textContent = gameScore() + ' Punkte';
-    progressEl.textContent = count + ' von ' + total + ' Aufgaben entdeckt';
+
+    progressEl.textContent =
+      count + ' von ' + total + ' Aufgaben entdeckt';
+
     var bar = document.getElementById('wolfProgressBar');
+
     if (bar) {
-      bar.style.width = (total ? count / total * 100 : 0) + '%';
+      bar.style.width =
+        (total ? count / total * 100 : 0) + '%';
     }
   }
-  function gameOpen() { gameModal.classList.add('open'); gameModal.setAttribute('aria-hidden','false'); }
+
+    function gameOpen() { gameModal.classList.add('open'); gameModal.setAttribute('aria-hidden','false'); }
   function gameDismiss() { gameModal.classList.remove('open', 'wolf-info-open'); gameModal.setAttribute('aria-hidden','true'); }
   gameClose.addEventListener('click', gameDismiss);
   gameModal.addEventListener('click', function(e) { if(e.target === gameModal) gameDismiss(); });
   document.addEventListener('keydown', function(e) { if(e.key === 'Escape') gameDismiss(); });
   document.getElementById('wolfReset').addEventListener('click', function() {
-    if (!confirm('Wolfgarten-Challenge wirklich neu starten?')) return;
-
-    // Gespeicherten Spielstand vollständig löschen
-    localStorage.removeItem('wolfgarten-schueler-spielstand-v2');
-
-    // Neu laden: Die Tour beginnt wieder am Außeneingang
-    window.location.reload();
+    if (!confirm('Alle gesammelten Punkte und Lösungen zurücksetzen?')) return;
+    done = {}; gameSave(); gameUpdate(); gameDismiss();
+    document.querySelectorAll('.wolf-hotspot').forEach(function(el) { el.classList.remove('completed'); });
   });
 
   // Wolfgarten: fliegende Punkte-Animation
@@ -530,8 +563,13 @@ try { localStorage.removeItem(gameKey); } catch(e) {}
   function gameTaskClick(task, index, el) {
     gameContent.replaceChildren();
     if (task.type === 'info') {
-      // Infotafeln sind reine Informationen:
-      // keine Punkte, kein Aufgabenfortschritt.
+      if (!done[index]) {
+        done[index] = true;
+        gameSave();
+        gameUpdate();
+        
+        el.classList.add('completed');
+      }
       var eyebrow = document.createElement('div');
       eyebrow.className = 'wolf-info-eyebrow';
       eyebrow.textContent = task.eyebrow || 'GYMNASIUM WOLFGARTEN';
@@ -611,6 +649,115 @@ try { localStorage.removeItem(gameKey); } catch(e) {}
   }
   var gameHotspots = [];
   var activeScene = scenes[0];
+  var editMode = false;
+  var selectedTask = -1;
+  var editor = document.getElementById('wolfEditor');
+  var editSelect = document.getElementById('wolfEditSelect');
+  var editMessage = document.getElementById('wolfEditMessage');
+  var editOverlay = document.getElementById('wolfEditOverlay');
+
+  // Quizfragen direkt im vorhandenen Bearbeitungsfenster ändern.
+  var quizEditor = document.createElement('div');
+  quizEditor.id = 'wolfQuizEditor';
+  quizEditor.style.cssText = 'display:none;margin-top:16px;padding-top:12px;border-top:1px solid #EEE6D8;max-height:42vh;overflow-y:auto;';
+  quizEditor.innerHTML = '<strong>❓ Quizfrage bearbeiten</strong>' +
+    '<label for="wolfQuestionText">Fragetext</label><textarea id="wolfQuestionText" rows="3"></textarea>' +
+    '<div id="wolfAnswerFields"></div>' +
+    '<label for="wolfCorrectAnswer">Richtige Antwort</label><select id="wolfCorrectAnswer"></select>' +
+    '<label for="wolfQuestionPoints">Punkte bei richtiger Antwort</label><input id="wolfQuestionPoints" type="number" min="0" max="100" step="1">' +
+    '<button id="wolfSaveQuestion" type="button">Frage speichern</button>' +
+    '<p id="wolfQuestionMessage" aria-live="polite"></p>';
+  editor.appendChild(quizEditor);
+  var questionInput = document.getElementById('wolfQuestionText');
+  var answerFields = document.getElementById('wolfAnswerFields');
+  var correctSelect = document.getElementById('wolfCorrectAnswer');
+  var pointsInput = document.getElementById('wolfQuestionPoints');
+  [questionInput, pointsInput].forEach(function(input) {
+    input.style.cssText = 'box-sizing:border-box;width:100%;padding:8px;margin:5px 0 12px;color:#24417B;background:#FFFFFF;border-radius:6px;border:1px solid #8793BC;font:inherit;';
+  });
+  function refreshQuizEditor() {
+    var task = gameTasks[selectedTask];
+    quizEditor.style.display = task && task.type === 'quiz' ? 'block' : 'none';
+    refreshInfoEditor();
+    if (!task || task.type !== 'quiz') return;
+    questionInput.value = task.question;
+    answerFields.replaceChildren();
+    correctSelect.replaceChildren();
+    task.answers.forEach(function(answer, i) {
+      var label = document.createElement('label');
+      label.textContent = 'Antwort ' + (i + 1);
+      var input = document.createElement('input');
+      input.className = 'wolf-answer-edit'; input.value = answer;
+      input.style.cssText = 'box-sizing:border-box;width:100%;padding:8px;margin:5px 0 12px;color:#24417B;background:#FFFFFF;border-radius:6px;border:1px solid #8793BC;font:inherit;';
+      label.appendChild(input); answerFields.appendChild(label);
+      var option = document.createElement('option');
+      option.value = String(i); option.textContent = 'Antwort ' + (i + 1);
+      correctSelect.appendChild(option);
+    });
+    correctSelect.value = String(task.correct);
+    pointsInput.value = String(task.points === undefined ? 10 : task.points);
+    document.getElementById('wolfQuestionMessage').textContent = '';
+  }
+  document.getElementById('wolfSaveQuestion').addEventListener('click', function() {
+    var task = gameTasks[selectedTask];
+    if (!task || task.type !== 'quiz') return;
+    var answers = Array.prototype.map.call(answerFields.querySelectorAll('input'), function(input) { return input.value.trim(); });
+    var question = questionInput.value.trim();
+    var msg = document.getElementById('wolfQuestionMessage');
+    if (!question || answers.some(function(a) { return !a; })) {
+      msg.textContent = 'Bitte die Frage und alle Antworten ausfüllen.'; return;
+    }
+    task.question = question; task.answers = answers;
+    task.correct = Number(correctSelect.value);
+    task.points = Math.max(0, Math.min(100, Math.round(Number(pointsInput.value) || 0)));
+    savedQuestions[selectedTask] = {question:task.question, answers:answers, correct:task.correct, points:task.points};
+    try { localStorage.setItem(questionsKey, JSON.stringify(savedQuestions)); } catch(e) {}
+    if (selectedTask >= baseTaskCount) saveExtraTasks();
+    gameUpdate();
+    msg.textContent = '✓ Frage gespeichert. Bitte anschließend die Konfiguration exportieren.';
+  });
+
+
+  // Wolfgarten-Infotafeln: Inhalte im Editor pflegen.
+  var infoEditor = document.createElement('div');
+  infoEditor.id = 'wolfInfoEditor';
+  infoEditor.style.cssText = 'display:none;margin-top:14px;padding-top:12px;border-top:1px solid #EEE6D8;max-height:42vh;overflow-y:auto;';
+  infoEditor.innerHTML = '<strong>ⓘ Infotafel bearbeiten</strong>' +
+    '<label for="wolfInfoEyebrow">Kleine grüne Überschrift</label><input id="wolfInfoEyebrow" type="text">' +
+    '<label for="wolfInfoTitle">Titel</label><input id="wolfInfoTitle" type="text">' +
+    '<label for="wolfInfoText">Beschreibung</label><textarea id="wolfInfoText" rows="5"></textarea>' +
+    '<label for="wolfInfoImage">Bildpfad (optional, z. B. img/science.jpg)</label><input id="wolfInfoImage" type="text" placeholder="img/science.jpg">' +
+    '<button id="wolfSaveInfo" type="button">Infotafel speichern</button>' +
+    '<p id="wolfInfoMessage" aria-live="polite"></p>';
+  editor.appendChild(infoEditor);
+  ['wolfInfoEyebrow','wolfInfoTitle','wolfInfoText','wolfInfoImage'].forEach(function(id) {
+    document.getElementById(id).style.cssText = 'box-sizing:border-box;width:100%;padding:8px;margin:5px 0 12px;color:#24417B;background:#fff;border-radius:6px;border:1px solid #8793BC;font:inherit;';
+  });
+  function refreshInfoEditor() {
+    var task = gameTasks[selectedTask];
+    infoEditor.style.display = task && task.type === 'info' ? 'block' : 'none';
+    if (!task || task.type !== 'info') return;
+    document.getElementById('wolfInfoEyebrow').value = task.eyebrow || '';
+    document.getElementById('wolfInfoTitle').value = task.title || '';
+    document.getElementById('wolfInfoText').value = task.text || '';
+    document.getElementById('wolfInfoImage').value = task.image || '';
+    document.getElementById('wolfInfoMessage').textContent = '';
+  }
+  document.getElementById('wolfSaveInfo').addEventListener('click', function() {
+    var task = gameTasks[selectedTask];
+    if (!task || task.type !== 'info') return;
+    task.eyebrow = document.getElementById('wolfInfoEyebrow').value.trim();
+    task.title = document.getElementById('wolfInfoTitle').value.trim();
+    task.text = document.getElementById('wolfInfoText').value.trim();
+    task.image = document.getElementById('wolfInfoImage').value.trim();
+    if (!task.title) {
+      document.getElementById('wolfInfoMessage').textContent = 'Bitte einen Titel eingeben.';
+      return;
+    }
+    saveExtraTasks();
+    document.getElementById('wolfInfoMessage').textContent = '✓ Infotafel gespeichert. Anschließend Konfiguration exportieren.';
+  });
+
   function createGameHotspot(task, index) {
     var target = scenes.find(function(s) { return s.data.id === task.scene; });
     if (!target) return;
@@ -635,6 +782,7 @@ try { localStorage.removeItem(gameKey); } catch(e) {}
     el.setAttribute('aria-label', el.title);
     el.addEventListener('click', function(e) {
       e.stopPropagation();
+      if (editMode) { selectedTask = index; editSelect.value = String(index); refreshQuizEditor(); editMessage.textContent = 'Alt/Option gedrückt halten und auf die gewünschte Stelle klicken.'; return; }
       gameTaskClick(task,index,el);
     });
     stopTouchAndScrollEventPropagation(el);
@@ -645,16 +793,186 @@ try { localStorage.removeItem(gameKey); } catch(e) {}
   }
   gameTasks.forEach(createGameHotspot);
 
-
+  // Neue Aufgaben direkt im Editor erstellen und entfernen.
+  var createArea = document.createElement('div');
+  createArea.style.cssText = 'margin:12px 0;padding:10px 0;border-top:1px solid #EEE6D8;display:flex;flex-wrap:wrap;gap:6px;';
+  function editorButton(label) {
+    var button = document.createElement('button');
+    button.type = 'button'; button.textContent = label;
+    button.style.cssText = 'cursor:pointer;padding:8px 10px;border-radius:6px;';
+    createArea.appendChild(button);
+    return button;
+  }
+  var addCoinButton = editorButton('＋ Neue Münze');
+  var addQuizButton = editorButton('＋ Neue Quizfrage');
+  var addInfoButton = editorButton('＋ Neue Infotafel');
+  var removeButton = editorButton('Aufgabe löschen');
+  // Die neuen Knöpfe oberhalb des Frageneditors anzeigen.
+  editor.insertBefore(createArea, quizEditor);
+  function addTask(type) {
+    var task = {
+      scene: activeScene.data.id,
+      type: type,
+      offset: 0,
+      pitch: 0,
+      points: type === 'quiz' ? 10 : (type === 'coin' ? 5 : 0)
+    };
+    if (type === 'quiz') {
+      task.question = 'Neue Frage – bitte bearbeiten';
+      task.answers = ['Antwort 1', 'Antwort 2', 'Antwort 3'];
+      task.correct = 0;
+    }
+    if (type === 'info') {
+      task.eyebrow = 'GYMNASIUM WOLFGARTEN';
+      task.title = 'Unsere Schule';
+      task.text = 'Hier kannst du deine Infotafel beschreiben.';
+      task.image = '';
+    }
+    var index = gameTasks.length;
+    gameTasks.push(task);
+    createGameHotspot(task, index);
+    saveExtraTasks();
+    refreshEditSelect(index);
+    gameUpdate();
+    editMessage.textContent = '✓ Neue ' + (type === 'coin' ? 'Münze' : (type === 'quiz' ? 'Frage' : 'Infotafel')) + ' erstellt. Mit Option + Klick im Panorama platzieren.';
+    if (type === 'quiz') document.getElementById('wolfQuestionMessage').textContent = 'Frage und Antworten bearbeiten, danach „Frage speichern“ klicken.';
+  }
+  addCoinButton.addEventListener('click', function() { addTask('coin'); });
+  addQuizButton.addEventListener('click', function() { addTask('quiz'); });
+  addInfoButton.addEventListener('click', function() { addTask('info'); });
+  removeButton.addEventListener('click', function() {
+    if (selectedTask < 0 || !gameTasks[selectedTask]) return;
+    if (selectedTask < baseTaskCount) {
+      editMessage.textContent = 'Die ursprünglichen Aufgaben können nicht gelöscht werden, damit bestehende Spielstände erhalten bleiben.';
+      return;
+    }
+    if (!confirm('Diese zusätzliche Aufgabe wirklich löschen?')) return;
+    var index = selectedTask;
+    // Eine gelöschte Zusatzaufgabe wird aus dem Spiel entfernt. Spätere Indizes werden angepasst.
+    if (gameHotspots[index]) gameHotspots[index].hotspot.destroy();
+    gameTasks.splice(index, 1);
+    gameHotspots.splice(index, 1);
+    function shiftKeys(obj) {
+      var next = {};
+      Object.keys(obj).forEach(function(key) {
+        var n = Number(key);
+        if (!Number.isInteger(n)) { next[key] = obj[key]; return; }
+        if (n < index) next[n] = obj[key];
+        else if (n > index) next[n-1] = obj[key];
+      });
+      return next;
+    }
+    savedPositions = shiftKeys(savedPositions);
+    savedQuestions = shiftKeys(savedQuestions);
+    done = shiftKeys(done);
+    // Hotspots der späteren Zusatzaufgaben neu erzeugen, damit Klick-Indizes stimmen.
+    for (var i = index; i < gameHotspots.length; i++) {
+      if (gameHotspots[i]) gameHotspots[i].hotspot.destroy();
+      createGameHotspot(gameTasks[i], i);
+    }
+    localStorage.setItem(positionsKey, JSON.stringify(savedPositions));
+    localStorage.setItem(questionsKey, JSON.stringify(savedQuestions));
+    gameSave(); saveExtraTasks();
+    refreshEditSelect(); gameUpdate();
+    editMessage.textContent = '✓ Zusatzaufgabe gelöscht.';
+  });
+  function refreshEditSelect(preferredIndex) {
+    editSelect.replaceChildren();
+    gameTasks.forEach(function(task, i) {
+      if (task.scene !== activeScene.data.id) return;
+      var option = document.createElement('option');
+      option.value = String(i);
+      option.textContent = (task.type === 'coin' ? '🪙 Münze ' : (task.type === 'quiz' ? '❓ Frage ' : 'ⓘ Infotafel ')) + (i+1);
+      editSelect.appendChild(option);
+    });
+    if (preferredIndex !== undefined && editSelect.querySelector('option[value="' + preferredIndex + '"]')) editSelect.value = String(preferredIndex);
+    selectedTask = editSelect.options.length ? Number(editSelect.value) : -1;
+    editMessage.textContent = selectedTask < 0 ? 'In diesem Raum ist noch keine Aufgabe.' : 'Mit der Maus umsehen. Zum Platzieren ALT (Option) gedrückt halten und auf die gewünschte Stelle klicken.';
+    refreshQuizEditor();
+  }
+  editSelect.addEventListener('change', function() { selectedTask = Number(editSelect.value); refreshQuizEditor(); });
+  document.getElementById('wolfEditToggle').addEventListener('click', function() {
+    editMode = !editMode;
+    editor.hidden = !editMode;
+    editOverlay.hidden = true; // Keine blockierende Ebene über dem Panorama
+    document.body.classList.toggle('wolf-editing', editMode);
+    if (editMode) { stopAutorotate(); refreshEditSelect(); }
+  });
+  // Positionieren mit Alt/Option + Klick, ohne die Mausnavigation zu blockieren.
+  panoElement.addEventListener('click', function(event) {
+    if (!editMode || !event.altKey || selectedTask < 0 || !gameHotspots[selectedTask]) return;
+    event.preventDefault();
+    event.stopPropagation();
+    var rect = panoElement.getBoundingClientRect();
+    var coords = activeScene.view.screenToCoordinates({
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
+    });
+    if (!coords || !isFinite(coords.yaw) || !isFinite(coords.pitch)) {
+      editMessage.textContent = 'Position nicht ermittelbar. Bitte erneut versuchen.';
+      return;
+    }
+    gameHotspots[selectedTask].hotspot.setPosition({yaw:coords.yaw, pitch:coords.pitch});
+    savedPositions[selectedTask] = {yaw:coords.yaw, pitch:coords.pitch};
+    try { localStorage.setItem(positionsKey, JSON.stringify(savedPositions)); } catch(e) {}
+    editMessage.textContent = '✓ Position gespeichert. Weitere Platzierung: Alt/Option + Klick.';
+  }, true);
+  document.getElementById('wolfExportPositions').addEventListener('click', function() {
+    var file = new Blob([JSON.stringify({version:2, positions:savedPositions, questions:savedQuestions, extraTasks:gameTasks.slice(baseTaskCount)}, null, 2)], {type:'application/json'});
+    var url = URL.createObjectURL(file);
+    var a = document.createElement('a'); a.href = url; a.download = 'wolfgarten-konfiguration.json'; a.click();
+    setTimeout(function() { URL.revokeObjectURL(url); }, 2000);
+  });
+  document.getElementById('wolfImportPositions').addEventListener('change', function(event) {
+    var file = event.target.files[0]; if (!file) return;
+    file.text().then(function(text) {
+      var config = JSON.parse(text);
+      var positions = config.positions || config; // alte Positionsdateien bleiben kompatibel
+      if (Array.isArray(config.extraTasks)) {
+        // Bestehende Zusatz-Hotspots entfernen, dann importierte Aufgaben laden.
+        for (var i = baseTaskCount; i < gameHotspots.length; i++) {
+          if (gameHotspots[i]) gameHotspots[i].hotspot.destroy();
+        }
+        gameTasks.length = baseTaskCount;
+        gameHotspots.length = baseTaskCount;
+        config.extraTasks.forEach(function(task) {
+          if (!task || (task.type !== 'coin' && task.type !== 'quiz' && task.type !== 'info')) return;
+          if (!scenes.some(function(s) { return s.data.id === task.scene; })) return;
+          var index = gameTasks.length;
+          gameTasks.push(task);
+          createGameHotspot(task, index);
+        });
+        saveExtraTasks();
+      }
+      if (config.questions && typeof config.questions === 'object') {
+        savedQuestions = config.questions;
+        applyQuestions();
+        localStorage.setItem(questionsKey, JSON.stringify(savedQuestions));
+        refreshQuizEditor();
+      }
+      Object.keys(positions).forEach(function(key) {
+        var index = Number(key), pos = positions[key];
+        if (gameHotspots[index] && pos && isFinite(pos.yaw) && isFinite(pos.pitch)) {
+          gameHotspots[index].hotspot.setPosition({yaw:pos.yaw,pitch:pos.pitch});
+          savedPositions[index] = {yaw:pos.yaw,pitch:pos.pitch};
+        }
+      });
+      localStorage.setItem(positionsKey, JSON.stringify(savedPositions));
+      refreshEditSelect(); gameUpdate();
+      editMessage.textContent = '✓ Positionen, Fragen und Zusatzaufgaben importiert.';
+    }).catch(function() { editMessage.textContent = 'Datei konnte nicht importiert werden.'; });
+    event.target.value = '';
+  });
   // Follow Marzipano scene changes (also for link hotspots).
   var originalSwitchScene = switchScene;
   switchScene = function(scene) {
     activeScene = scene;
     originalSwitchScene(scene);
+    if (editMode) refreshEditSelect();
   };
   gameUpdate();
 
   // Display the initial scene.
-  switchScene(findSceneById('6-aueneingang') || scenes[0]);
+  switchScene(findSceneById('33-haupteingang') || scenes[0]);
 
 })();
