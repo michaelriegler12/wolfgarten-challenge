@@ -446,13 +446,13 @@ if (typeof APP_DATA !== 'undefined' && Array.isArray(APP_DATA.scenes)) {
   // Wolfgarten Challenge: hotspots and shared score.
   var gameKey = 'wolfgarten-challenge-v1';
   var positionsKey = 'wolfgarten-challenge-positions-v1';
+  var studentConfig = window.WOLF_STUDENT_CONFIG || {};
   var gameTasks = [];
-  // Zusätzliche Aufgaben bleiben über Neustarts erhalten; ursprüngliche IDs bleiben stabil.
+  // Aufgaben und Positionen aus der veröffentlichten Konfiguration laden.
   var extraTasksKey = 'wolfgarten-challenge-extra-tasks-v1';
   var baseTaskCount = gameTasks.length;
-  var extraTasks = [];
-  try { extraTasks = JSON.parse(localStorage.getItem(extraTasksKey) || '[]') || []; } catch(e) { extraTasks = []; }
-  if (!Array.isArray(extraTasks)) extraTasks = [];
+  var extraTasks = Array.isArray(studentConfig.tasks) ? studentConfig.tasks : [];
+
   extraTasks.forEach(function(task) {
     if (task && (task.type === 'coin' || task.type === 'quiz' || task.type === 'info') && scenes.some(function(s) { return s.data.id === task.scene; })) {
       gameTasks.push(task);
@@ -463,8 +463,7 @@ if (typeof APP_DATA !== 'undefined' && Array.isArray(APP_DATA.scenes)) {
   }
   // Eigene Fragen werden getrennt von Positionen gespeichert.
   var questionsKey = 'wolfgarten-challenge-questions-v1';
-  var savedQuestions = {};
-  try { savedQuestions = JSON.parse(localStorage.getItem(questionsKey) || '{}') || {}; } catch(e) { savedQuestions = {}; }
+  var savedQuestions = studentConfig.questions || {};
   function applyQuestions() {
     Object.keys(savedQuestions).forEach(function(key) {
       var index = Number(key), saved = savedQuestions[key], task = gameTasks[index];
@@ -476,8 +475,7 @@ if (typeof APP_DATA !== 'undefined' && Array.isArray(APP_DATA.scenes)) {
     });
   }
   applyQuestions();
-  var savedPositions = {};
-  try { savedPositions = JSON.parse(localStorage.getItem(positionsKey) || '{}') || {}; } catch(e) { savedPositions = {}; }
+  var savedPositions = studentConfig.positions || {};
   var done = {};
   // Bei jedem Öffnen der VR-Challenge ein neues Spiel beginnen.
 done = {};
