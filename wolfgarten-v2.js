@@ -978,6 +978,6 @@ try { localStorage.removeItem(gameKey); } catch(e) {}
   gameUpdate();
 
   // Display the initial scene.
-  switchScene(findSceneById('33-haupteingang') || scenes[0]);
+  switchScene(findSceneById('6-aueneingang') || scenes[0]);
 
 })();
